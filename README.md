@@ -9,7 +9,7 @@ It trades **tokenized US stocks (rTokens) on Bitget** in the window when NYSE an
 Track: **Alpha Factory** (Quantitative Strategies)  
 Sub-theme: **After-Hours Information Pricing**  
 Handbook: https://bitget-ai.gitbook.io/bitgetai_hackathons2  
-Deadline: **21 September 2026, 23:59 UTC+8**
+Deadline: **27 September 2026, submission window closes (UTC+8)**
 
 **Live**: [seal-alpha-factory.vercel.app](https://seal-alpha-factory.vercel.app) (dashboard) · [seal-backend-vxtk.onrender.com](https://seal-backend-vxtk.onrender.com) (API)
 
