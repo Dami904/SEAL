@@ -1,0 +1,23 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Node / pnpm
+node_modules/
+.next/
+dist/
+*.tsbuildinfo
+
+# Local env files — never committed
+.env
+.env.local
+*.local
+
+# Generated backtest output and the derived (non-raw) dataset — reproducible
+# from committed source (data/tsla_ohlcv_raw.json + scripts/), regenerated
+# by CI, not carried as a fixture that can silently go stale.
+reports/
+data/real_series.csv
+data/sample_series.csv

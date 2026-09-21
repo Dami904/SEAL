@@ -1,0 +1,30 @@
+data_path: data/real_series.csv  # see seal/data.py for the required CSV schema;
+                                  # built by scripts/build_real_dataset.py from
+                                  # real TSLA OHLCV (bitget-mcp-server) + a
+                                  # documented after-hours model, see docs/LIMITATIONS.md
+
+symbol: rTSLA           # Bitget rToken ticker (verified real: r + underlying ticker)
+entry_threshold: 0.015  # 1.5% spread required to trigger
+stop_loss: 0.02         # 2% adverse move against entry spread
+tier_notional: 5000     # parent notional cap (USD) for this tier
+
+clip_count: 8
+clip_min_pct: 0.08
+clip_max_pct: 0.20
+jitter_min_seconds: 5
+jitter_max_seconds: 45
+
+taker_fee_bps: 6
+slippage_bps_per_clip: 3
+
+# Verified real dates (Tesla Q2 2026 earnings after close, FOMC, August CPI) —
+# see scripts/build_real_dataset.py for sourcing.
+event_dates:
+  - "2026-07-22"
+  - "2026-07-28"
+  - "2026-07-29"
+  - "2026-09-11"
+  - "2026-09-15"
+  - "2026-09-16"
+
+split_date: "2026-08-01"  # IS: Jun 1-Jul 31 (61d), OOS: Aug 1-Sep 17 (48d)
