@@ -21,7 +21,7 @@ export function Nav() {
               SEAL
             </span>
             <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-mist/70">
-              Alpha Factory · rTSLA
+              Alpha Factory
             </span>
           </Link>
 
