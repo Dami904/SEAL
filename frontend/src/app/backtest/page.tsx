@@ -3,14 +3,25 @@ import { MetricCard } from "@/components/MetricCard";
 import { Card, CardLabel } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EquityCurveChart, RollingSharpeChart } from "@/components/charts";
-import { fetchBacktestSummary } from "@/lib/api";
+import { SymbolSwitcher } from "@/components/SymbolSwitcher";
+import { fetchBacktestSummary, SUPPORTED_SYMBOLS, type SupportedSymbol } from "@/lib/api";
 
 function pct(x: number, digits = 2) {
   return `${(x * 100).toFixed(digits)}%`;
 }
 
-export default async function BacktestPage() {
-  const summary = await fetchBacktestSummary();
+function parseSymbol(raw: string | string[] | undefined): SupportedSymbol {
+  const s = (Array.isArray(raw) ? raw[0] : raw)?.toLowerCase();
+  return (SUPPORTED_SYMBOLS as readonly string[]).includes(s ?? "") ? (s as SupportedSymbol) : "rtsla";
+}
+
+export default async function BacktestPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ symbol?: string | string[] }>;
+}) {
+  const symbol = parseSymbol((await searchParams).symbol);
+  const summary = await fetchBacktestSummary(symbol);
 
   if (!summary) {
     return (
@@ -20,11 +31,13 @@ export default async function BacktestPage() {
           title="Backtest report"
           description="Trade Bitget rTokens when US cash stocks are closed. Sealed size, honest costs."
         />
+        <SymbolSwitcher basePath="/backtest" active={symbol} />
         <Card>
           <p className="text-sm text-mist">
-            Backend not reachable, or <code className="text-snow">reports/backtest_summary.json</code>{" "}
-            doesn&apos;t exist yet. Run{" "}
-            <code className="text-snow">python scripts/run_backtest.py --config configs/default.yaml</code>{" "}
+            Backend not reachable, or the report for this symbol doesn&apos;t exist yet. Run{" "}
+            <code className="text-snow">
+              python scripts/run_backtest.py --config configs/{symbol === "rtsla" ? "default" : symbol}.yaml
+            </code>{" "}
             and start the backend (<code className="text-snow">pnpm --filter @seal/backend dev</code>).
           </p>
         </Card>
@@ -42,6 +55,7 @@ export default async function BacktestPage() {
         title="Backtest report"
         description="Same signal. Sealed size. The rToken reprices while cash is shut; the parent order goes out as randomized clips so a thin after-hours book can't read the full size."
       />
+      <SymbolSwitcher basePath="/backtest" active={symbol} />
 
       <p className="max-w-2xl text-xs leading-relaxed text-mist">
         These numbers are a backtest against a documented after-hours price model

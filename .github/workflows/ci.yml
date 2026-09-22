@@ -14,15 +14,19 @@ jobs:
           python-version: "3.12"
       - run: pip install -r requirements.txt
       - run: pytest -q
-      # Rebuilds real_series.csv from the committed raw source (no network —
-      # tsla_ohlcv_raw.json is already in the repo) and runs the real
-      # backtest, so backend tests have a real report to serve against.
-      - run: python scripts/build_real_dataset.py
-      - run: python scripts/run_backtest.py --config configs/default.yaml
+      # Rebuilds every symbol's *_series.csv from the committed raw sources
+      # (no network — the *_ohlcv_raw.json files are already in the repo)
+      # and runs the real backtest for each, so backend tests have real
+      # reports to serve against.
+      - run: python scripts/build_real_dataset.py --all
+      - run: |
+          for cfg in default rnvda raapl ramzn rmsft; do
+            python scripts/run_backtest.py --config configs/$cfg.yaml
+          done
       - uses: actions/upload-artifact@v4
         with:
-          name: backtest-report
-          path: reports/backtest_summary.json
+          name: backtest-reports
+          path: reports/*_summary.json
 
   js:
     needs: python
@@ -40,7 +44,7 @@ jobs:
       - run: pnpm typecheck
       - uses: actions/download-artifact@v4
         with:
-          name: backtest-report
+          name: backtest-reports
           path: reports
       - run: pnpm test
       - run: pnpm build

@@ -24,23 +24,30 @@ The Sharpe/Sortino numbers in `reports/backtest_summary.md` come from a
   produce a "nicer" Sharpe — that would be less honest, not more.
 
 **What is real**: the underlying `cash_close` and `next_cash_open` values
-are real TSLA daily OHLCV (fetched via `bitget-mcp-server`), and the
-`event_dates` (Tesla Q2 2026 earnings, FOMC, CPI) are real, verified
-calendar dates, not fabricated. The trading P&L and forecast-accuracy
-metrics are graded against those real outcomes. What's modeled is only the
-intermediate after-hours path the strategy would have observed.
+are real daily OHLCV (fetched via `bitget-mcp-server`) for every symbol,
+and each symbol's `event_dates` (its own real earnings date, from
+`bitget-mcp-server`'s `equity_calendar_earnings`, plus real FOMC/CPI dates
+that apply macro-wide) are real, verified calendar dates, not fabricated.
+The trading P&L and forecast-accuracy metrics are graded against those real
+outcomes. What's modeled is only the intermediate after-hours path the
+strategy would have observed — see `scripts/build_real_dataset.py`.
 
 **Before treating these numbers as a submission claim of edge**: re-run
 against a longer real dataset and, ideally, real Bitget rToken historical
 prices once accessible (see `API_NOTES.md` for what's missing), or validate
 via Bitget Playbook's own backtest.
 
-## Single-symbol v1
+## Five symbols, independently — not a portfolio
 
-Only `rTSLA` is covered. The signal/execution/backtest code is
-symbol-agnostic (`configs/default.yaml` takes one `symbol` + `data_path`),
-but no multi-symbol portfolio logic, correlation handling across positions,
-or aggregate risk limit exists.
+`rTSLA`, `rNVDA`, `rAAPL`, `rAMZN`, `rMSFT` are each backtested
+independently (`configs/{symbol}.yaml`, one report per symbol) to show the
+signal generalizes beyond a single stock, not just curve-fit to one
+earnings gap. This is **not** a correlated multi-symbol portfolio: there's
+no shared position sizing, no cross-symbol risk limit, and no aggregate
+drawdown across symbols traded simultaneously — each report stands alone.
+Adding real portfolio-level logic (correlation-aware sizing, an aggregate
+risk budget) is a materially bigger build than adding another independent
+symbol and hasn't been done.
 
 ## No live execution
 

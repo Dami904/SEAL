@@ -14,13 +14,20 @@ execution, per CLAUDE.md — filled in before writing a client, not after.
   before assuming the service is down.
 - **Discovery**: `guide()` lists categories (`equity`, `crypto`, `etf`,
   `news`, `sentiment`); `guide(category="equity")` lists entries.
-- **Entry used**: `equity_price_historical` — `do_query(entry_id=
-  "equity_price_historical", params={"symbol": "TSLA", "start_date":
-  "2026-06-01", "end_date": "2026-09-17"})`. Returned real daily OHLCV
-  (open/high/low/close/volume/vwap/transactions), provider `massive`,
-  `data_tier: free`, synchronous response (~0.5s), no pagination needed for
-  a 75-row range. Used to build `data/tsla_ohlcv_raw.json` →
-  `data/real_series.csv` (see `scripts/build_real_dataset.py`).
+- **Entries used**:
+  - `equity_price_historical` — `do_query(entry_id="equity_price_historical",
+    params={"symbol": "TSLA", "start_date": "2026-06-01", "end_date":
+    "2026-09-17"})`. Returned real daily OHLCV (open/high/low/close/volume/
+    vwap/transactions), provider `massive`, `data_tier: free`, synchronous
+    (~0.5s), no pagination needed for a 75-row range. Confirmed working for
+    TSLA, NVDA, AAPL, AMZN, MSFT — not a narrow whitelist, standard
+    US-listed tickers broadly. Used to build `data/{symbol}_ohlcv_raw.json`
+    → `data/{symbol}_series.csv` (see `scripts/build_real_dataset.py`).
+  - `equity_calendar_earnings` — `do_query(entry_id="equity_calendar_earnings",
+    params={"symbol": "NVDA", "start_date": ..., "end_date": ...})`. Returns
+    real, verified earnings report dates directly (provider `finnhub`) —
+    used instead of manual web search once discovered. This is what sourced
+    each symbol's real event date in `configs/{symbol}.yaml`.
 - **What it does NOT cover**: Bitget's own rToken price feed. This server
   is US-stock/ETF cash-market data only (per the `equity` category). It
   does not give the tokenized rToken's own trading price.

@@ -1,5 +1,8 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8787";
 
+export const SUPPORTED_SYMBOLS = ["rtsla", "rnvda", "raapl", "ramzn", "rmsft"] as const;
+export type SupportedSymbol = (typeof SUPPORTED_SYMBOLS)[number];
+
 export interface ForecastBlock {
   count: number;
   mae_pct: number;
@@ -41,9 +44,11 @@ export interface BacktestSummary {
   one_shot_vs_clipped: CostGap;
 }
 
-export async function fetchBacktestSummary(): Promise<BacktestSummary | null> {
+export async function fetchBacktestSummary(
+  symbol: SupportedSymbol = "rtsla",
+): Promise<BacktestSummary | null> {
   try {
-    const res = await fetch(`${API_BASE}/backtest/summary`, { cache: "no-store" });
+    const res = await fetch(`${API_BASE}/backtest/summary?symbol=${symbol}`, { cache: "no-store" });
     if (!res.ok) return null;
     return (await res.json()) as BacktestSummary;
   } catch {

@@ -1,14 +1,25 @@
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardLabel } from "@/components/ui/card";
 import { ForecastForm } from "./ForecastForm";
-import { fetchBacktestSummary } from "@/lib/api";
+import { SymbolSwitcher } from "@/components/SymbolSwitcher";
+import { fetchBacktestSummary, SUPPORTED_SYMBOLS, type SupportedSymbol } from "@/lib/api";
 
 function pct(x: number, digits = 2) {
   return `${(x * 100).toFixed(digits)}%`;
 }
 
-export default async function ForecastPage() {
-  const summary = await fetchBacktestSummary();
+function parseSymbol(raw: string | string[] | undefined): SupportedSymbol {
+  const s = (Array.isArray(raw) ? raw[0] : raw)?.toLowerCase();
+  return (SUPPORTED_SYMBOLS as readonly string[]).includes(s ?? "") ? (s as SupportedSymbol) : "rtsla";
+}
+
+export default async function ForecastPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ symbol?: string | string[] }>;
+}) {
+  const symbol = parseSymbol((await searchParams).symbol);
+  const summary = await fetchBacktestSummary(symbol);
   const forecast = summary?.headline.forecast;
 
   return (
@@ -22,7 +33,10 @@ export default async function ForecastPage() {
       <ForecastForm />
 
       <Card>
-        <CardLabel>Backtested forecast accuracy</CardLabel>
+        <div className="flex items-center justify-between gap-4">
+          <CardLabel>Backtested forecast accuracy</CardLabel>
+          <SymbolSwitcher basePath="/forecast" active={symbol} />
+        </div>
         <p className="mt-1 text-xs text-mist">
           Every entry in the backtest is a forecast, scored against the realized next-day open.
         </p>

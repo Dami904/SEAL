@@ -34,9 +34,10 @@ def main() -> None:
     rolling = rolling_sharpe(result, window_days=30)
     gap = cost_gap(df, params, seed=args.seed)
 
+    slug = params.symbol.lower()  # e.g. "rtsla" — one report set per symbol
     reports_dir = ROOT / "reports"
     reports_dir.mkdir(exist_ok=True)
-    result.equity_curve.to_csv(reports_dir / "equity_curve.csv", index=False)
+    result.equity_curve.to_csv(reports_dir / f"{slug}_equity_curve.csv", index=False)
 
     equity_curve = [
         {"timestamp": row["timestamp"].isoformat(), "equity": float(row["equity"])}
@@ -52,7 +53,7 @@ def main() -> None:
         "rolling_30day_sharpe": rolling,
         "one_shot_vs_clipped": gap,
     }
-    (reports_dir / "backtest_summary.json").write_text(json.dumps(report, indent=2))
+    (reports_dir / f"{slug}_summary.json").write_text(json.dumps(report, indent=2))
 
     lines = [
         "# Backtest summary",
@@ -92,7 +93,7 @@ def main() -> None:
         f"- Improvement from clipping: {gap['pnl_improvement']:.2f}",
         "",
     ]
-    summary_path = reports_dir / "backtest_summary.md"
+    summary_path = reports_dir / f"{slug}_summary.md"
     summary_path.write_text("\n".join(lines))
 
     print("\n".join(lines))

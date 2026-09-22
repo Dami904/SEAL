@@ -1,0 +1,25 @@
+data_path: data/rmsft_series.csv
+
+symbol: rMSFT
+entry_threshold: 0.015
+stop_loss: 0.02
+tier_notional: 5000
+
+clip_count: 8
+clip_min_pct: 0.08
+clip_max_pct: 0.20
+jitter_min_seconds: 5
+jitter_max_seconds: 45
+
+taker_fee_bps: 6
+slippage_bps_per_clip: 3
+
+# MSFT Q4 FY2026 earnings (bitget-mcp-server equity_calendar_earnings) + FOMC + CPI.
+event_dates:
+  - "2026-07-29"
+  - "2026-07-28"
+  - "2026-09-11"
+  - "2026-09-15"
+  - "2026-09-16"
+
+split_date: "2026-08-01"

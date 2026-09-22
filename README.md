@@ -132,23 +132,24 @@ seal/
 │   ├── backtest.py          # parent fills, costs, IS/OOS, rolling Sharpe,
 │   │                        #   cost-gap, forecast accuracy
 │   └── params.py
-├── configs/
-│   └── default.yaml         # rTSLA, real event dates, IS/OOS split
+├── configs/                 # one config per symbol — real event dates, IS/OOS split
+│   ├── default.yaml         # rTSLA (also the backend's default)
+│   ├── rnvda.yaml, raapl.yaml, ramzn.yaml, rmsft.yaml
 ├── data/
-│   ├── tsla_ohlcv_raw.json  # real TSLA OHLCV via bitget-mcp-server (committed)
-│   ├── real_series.csv      # derived: real close/open + after-hours model
-│   │                        #   (gitignored — rebuilt by build_real_dataset.py,
-│   │                        #   including in CI, from the committed raw JSON)
+│   ├── {tsla,nvda,aapl,amzn,msft}_ohlcv_raw.json  # real OHLCV via
+│   │                        #   bitget-mcp-server (committed)
+│   ├── r{tsla,nvda,aapl,amzn,msft}_series.csv      # derived: real close/open
+│   │                        #   + after-hours model (gitignored — rebuilt by
+│   │                        #   build_real_dataset.py, incl. in CI, from the
+│   │                        #   committed raw JSON)
 │   └── sample_series.csv    # synthetic, standalone convenience generator for
 │                             #   local exploration — NOT used by pytest or CI
 ├── reports/                 # generated, gitignored — see Quick start
-│   ├── backtest_summary.md  # human-readable
-│   ├── backtest_summary.json # structured, served by backend/
-│   └── equity_curve.csv
+│   └── r{tsla,nvda,aapl,amzn,msft}_summary.{md,json}, *_equity_curve.csv
 ├── scripts/
 │   ├── run_backtest.py
 │   ├── generate_sample_data.py
-│   └── build_real_dataset.py
+│   └── build_real_dataset.py  # --symbol <slug> or --all
 ├── backend/                 # TS/Fastify — serves the backtest report +
 │   │                        #   a live forecast endpoint (the reframe)
 │   ├── src/{signal.ts, forecast.ts, routes/, server.ts}
@@ -175,16 +176,20 @@ cd seal
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
+python scripts/build_real_dataset.py --all    # or --symbol rtsla for just one
 python scripts/run_backtest.py --config configs/default.yaml
+# also: configs/rnvda.yaml, raapl.yaml, ramzn.yaml, rmsft.yaml
 ```
 
-`configs/default.yaml` already points at `data/real_series.csv` — real TSLA
-closes/opens (via `bitget-mcp-server`) plus a documented after-hours price
-model (see `docs/LIMITATIONS.md` before treating the headline Sharpe as a
-validated real-world edge; it isn't one yet). `scripts/generate_sample_data.py`
-regenerates a synthetic fallback used by CI/tests, and
-`scripts/build_real_dataset.py` rebuilds `real_series.csv` from
-`tsla_ohlcv_raw.json`.
+Five symbols are backtested **independently** — `rTSLA`, `rNVDA`, `rAAPL`,
+`rAMZN`, `rMSFT` — to show the signal generalizes beyond one stock, not a
+correlated portfolio (see `docs/LIMITATIONS.md`). Each config points at its
+own real closes/opens (via `bitget-mcp-server`) plus a documented
+after-hours price model — read `docs/LIMITATIONS.md` before treating any
+headline Sharpe as a validated real-world edge; none of them are one yet.
+`scripts/generate_sample_data.py` regenerates a synthetic fallback for local
+exploration only (not used by CI/tests), and `scripts/build_real_dataset.py`
+rebuilds each symbol's series from its committed raw OHLCV JSON.
 
 Backtest must cover **at least 60 days** total and **at least 30 days out of
 sample** — the default config's window (Jun 1–Sep 17, 2026, split Aug 1)
@@ -233,8 +238,9 @@ Not “all traders.” Not a research chatbot.
 - Built with **Claude Sonnet 5, via Claude Code** (the Qwen hackathon
   subsidy explicitly excludes Claude Code, so this isn't a Qwen build).
 - Used to scaffold `signal.py` / `execution.py` / `backtest.py`, pull real
-  TSLA price history via `bitget-mcp-server`, and design the metrics
-  extensions (IS/OOS split, rolling Sharpe, cost-gap, forecast accuracy).
+  price history + earnings dates for all five symbols via `bitget-mcp-server`,
+  and design the metrics extensions (IS/OOS split, rolling Sharpe, cost-gap,
+  forecast accuracy).
 - Not used inside `backtest.py` to pick a trade's side or size at runtime —
   that's deterministic code (`seal/signal.py`, `seal/execution.py`), not a
   model call.

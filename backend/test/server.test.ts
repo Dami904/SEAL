@@ -29,12 +29,26 @@ describe("routes", () => {
     expect(body.impliedOpen).toBe(340);
   });
 
-  it("GET /backtest/summary returns the real report", async () => {
+  it("GET /backtest/summary defaults to rtsla", async () => {
     const app = buildApp();
     const res = await app.inject({ method: "GET", url: "/backtest/summary" });
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(body.symbol).toBe("rTSLA");
     expect(body.headline.trade_count).toBeGreaterThan(0);
+  });
+
+  it("GET /backtest/summary?symbol=rnvda returns that symbol's report", async () => {
+    const app = buildApp();
+    const res = await app.inject({ method: "GET", url: "/backtest/summary?symbol=rnvda" });
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.symbol).toBe("rNVDA");
+  });
+
+  it("GET /backtest/summary?symbol=bogus rejects unknown symbols", async () => {
+    const app = buildApp();
+    const res = await app.inject({ method: "GET", url: "/backtest/summary?symbol=bogus" });
+    expect(res.statusCode).toBe(400);
   });
 });

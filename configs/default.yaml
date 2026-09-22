@@ -1,7 +1,8 @@
-data_path: data/real_series.csv  # see seal/data.py for the required CSV schema;
-                                  # built by scripts/build_real_dataset.py from
-                                  # real TSLA OHLCV (bitget-mcp-server) + a
-                                  # documented after-hours model, see docs/LIMITATIONS.md
+data_path: data/rtsla_series.csv  # see seal/data.py for the required CSV schema;
+                                    # built by `python scripts/build_real_dataset.py
+                                    # --symbol rtsla` from real TSLA OHLCV
+                                    # (bitget-mcp-server) + a documented after-hours
+                                    # model, see docs/LIMITATIONS.md
 
 symbol: rTSLA           # Bitget rToken ticker (verified real: r + underlying ticker)
 entry_threshold: 0.015  # 1.5% spread required to trigger
