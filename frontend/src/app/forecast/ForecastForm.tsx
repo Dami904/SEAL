@@ -4,10 +4,18 @@ import { useState } from "react";
 import { Card, CardLabel } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { fetchForecast, type ForecastResponse } from "@/lib/api";
+import { fetchForecast, SUPPORTED_SYMBOLS, type ForecastResponse } from "@/lib/api";
+
+const SYMBOL_LABELS: Record<string, string> = {
+  rtsla: "rTSLA",
+  rnvda: "rNVDA",
+  raapl: "rAAPL",
+  ramzn: "rAMZN",
+  rmsft: "rMSFT",
+};
 
 export function ForecastForm() {
-  const [symbol, setSymbol] = useState("rTSLA");
+  const [symbol, setSymbol] = useState("rtsla");
   const [rtokenPrice, setRtokenPrice] = useState("340");
   const [cashClose, setCashClose] = useState("330");
   const [event, setEvent] = useState(false);
@@ -20,7 +28,7 @@ export function ForecastForm() {
     setLoading(true);
     setError(null);
     const res = await fetchForecast({
-      symbol,
+      symbol: SYMBOL_LABELS[symbol] ?? symbol,
       rtokenPrice: Number(rtokenPrice),
       cashClose: Number(cashClose),
       event,
@@ -40,11 +48,17 @@ export function ForecastForm() {
       <form onSubmit={onSubmit} className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
         <label className="col-span-2 sm:col-span-1">
           <span className="text-xs text-mist">Symbol</span>
-          <input
+          <select
             value={symbol}
             onChange={(e) => setSymbol(e.target.value)}
             className="mt-1 w-full rounded-input border border-input bg-background px-3 py-2 text-sm text-snow"
-          />
+          >
+            {SUPPORTED_SYMBOLS.map((s) => (
+              <option key={s} value={s}>
+                {SYMBOL_LABELS[s]}
+              </option>
+            ))}
+          </select>
         </label>
         <label>
           <span className="text-xs text-mist">rToken price</span>
