@@ -161,18 +161,26 @@
     {
       "timestamp": "2026-09-17T02:00:00+00:00",
       "equity": 2880.948965547509
+    },
+    {
+      "timestamp": "2026-09-17T23:00:00+00:00",
+      "equity": 2939.3269597305266
+    },
+    {
+      "timestamp": "2026-09-18T23:00:00+00:00",
+      "equity": 3041.2633399439173
     }
   ],
   "headline": {
-    "trade_count": 40,
-    "total_pnl": 2880.94896554751,
-    "sharpe": 7.200907491083363,
-    "sortino": 14.80869582041437,
+    "trade_count": 42,
+    "total_pnl": 3041.2633399439183,
+    "sharpe": 7.519633339832097,
+    "sortino": 15.907705656165794,
     "max_drawdown": -90.7548066346069,
-    "turnover": 400000.0,
+    "turnover": 420000.0,
     "forecast": {
-      "count": 40,
-      "mae_pct": 0.011037740136092968,
+      "count": 42,
+      "mae_pct": 0.010924788872485528,
       "directional_count": 4,
       "directional_accuracy": 1.0
     }
@@ -194,20 +202,20 @@
       }
     },
     "out_of_sample": {
-      "trade_count": 17,
-      "total_pnl": 1449.6419894891167,
-      "sharpe": 7.686711992927241,
-      "sortino": 26.846915741584933,
+      "trade_count": 19,
+      "total_pnl": 1609.956363885525,
+      "sharpe": 8.378895968437826,
+      "sortino": 31.496086018702652,
       "max_drawdown": -51.412571958179,
-      "turnover": 170000.0,
+      "turnover": 190000.0,
       "forecast": {
-        "count": 17,
-        "mae_pct": 0.008436412956087044,
+        "count": 19,
+        "mae_pct": 0.00846055512916596,
         "directional_count": 2,
         "directional_accuracy": 1.0
       }
     },
-    "oos_decay_ratio": 1.1068471196834706,
+    "oos_decay_ratio": 1.2065180635525647,
     "oos_decay_flag": false
   },
   "rolling_30day_sharpe": [
@@ -601,18 +609,22 @@
     },
     {
       "date": "2026-09-17",
-      "sharpe": 8.232947879944742
+      "sharpe": 8.710852773407437
+    },
+    {
+      "date": "2026-09-18",
+      "sharpe": 9.389640790826716
     }
   ],
   "one_shot_vs_clipped": {
     "clipped": {
-      "total_pnl": 2880.94896554751,
-      "sharpe": 7.200907491083363
+      "total_pnl": 3041.2633399439183,
+      "sharpe": 7.519633339832097
     },
     "one_shot": {
-      "total_pnl": 2842.1621689831063,
-      "sharpe": 7.144354103233039
+      "total_pnl": 3000.537203551294,
+      "sharpe": 7.462583635045974
     },
-    "pnl_improvement": 38.78679656440363
+    "pnl_improvement": 40.726136392624085
   }
 }

@@ -5,10 +5,10 @@ Said plainly, not glossed over.
 ## The backtest's edge is not validated, and the headline Sharpe should not be read as a real-world expectation
 
 The Sharpe/Sortino numbers in `reports/backtest_summary.md` come from a
-75-trading-day window against a synthetic after-hours rToken price path
+77-trading-day window against a synthetic after-hours rToken price path
 (see below). Two independent reasons the absolute numbers are optimistic:
 
-- **Short sample.** 75 trading days is a very short backtest. Sharpe
+- **Short sample.** 77 trading days is a very short backtest. Sharpe
   estimates from short windows are statistically noisy and routinely
   overstate the true long-run Sharpe — this is true of any strategy, not
   specific to SEAL.

@@ -1,9 +1,9 @@
 {
   "source": "bitget-mcp-server, entry_id=equity_price_historical, provider=massive",
   "symbol": "AMZN",
-  "fetched_at": "2026-09-22T15:00:40Z",
+  "fetched_at": "2026-09-22T15:48:06Z",
   "start_date": "2026-06-01",
-  "end_date": "2026-09-17",
+  "end_date": "2026-09-21",
   "rows": [
 {"date":"2026-06-01","open":266.285,"close":261.26},
 {"date":"2026-06-02","open":257.16,"close":256.52},
@@ -80,6 +80,8 @@
 {"date":"2026-09-14","open":253.15,"close":253.54},
 {"date":"2026-09-15","open":252.24,"close":248.42},
 {"date":"2026-09-16","open":248.1,"close":245.96},
-{"date":"2026-09-17","open":251.065,"close":251.19}
+{"date":"2026-09-17","open":251.065,"close":251.19},
+{"date":"2026-09-18","open":252.92,"close":253.71},
+{"date":"2026-09-21","open":256.4,"close":258.45}
   ]
 }

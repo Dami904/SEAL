@@ -1,9 +1,9 @@
 {
   "source": "bitget-mcp-server, entry_id=equity_price_historical, provider=massive",
   "symbol": "AAPL",
-  "fetched_at": "2026-09-22T14:58:41Z",
+  "fetched_at": "2026-09-22T15:48:00Z",
   "start_date": "2026-06-01",
-  "end_date": "2026-09-17",
+  "end_date": "2026-09-21",
   "rows": [
 {"date":"2026-06-01","open":309.625,"close":306.31},
 {"date":"2026-06-02","open":307.46,"close":315.2},
@@ -80,6 +80,8 @@
 {"date":"2026-09-14","open":334.79,"close":333.08},
 {"date":"2026-09-15","open":330.135,"close":331.34},
 {"date":"2026-09-16","open":332.53,"close":332.41},
-{"date":"2026-09-17","open":334.77,"close":337}
+{"date":"2026-09-17","open":334.77,"close":337},
+{"date":"2026-09-18","open":337.905,"close":336.13},
+{"date":"2026-09-21","open":335.28,"close":338.98}
   ]
 }

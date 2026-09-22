@@ -1,9 +1,9 @@
 {
   "source": "bitget-mcp-server, entry_id=equity_price_historical, provider=massive",
   "symbol": "TSLA",
-  "fetched_at": "2026-09-17T22:58:03Z",
+  "fetched_at": "2026-09-22T15:47:47Z",
   "start_date": "2026-06-01",
-  "end_date": "2026-09-17",
+  "end_date": "2026-09-21",
   "rows": [
 {"date":"2026-06-01","open":427.49,"high":429.6,"low":415.43,"close":415.88,"volume":44937852},
 {"date":"2026-06-02","open":418.22,"high":424.42,"low":413.65,"close":423.74,"volume":37613631},
@@ -80,6 +80,8 @@
 {"date":"2026-09-14","open":359.78,"high":367.73,"low":357.04,"close":358.97,"volume":32477182},
 {"date":"2026-09-15","open":358.75,"high":362.39,"low":354.05,"close":356.58,"volume":30317728},
 {"date":"2026-09-16","open":357.925,"high":365.1,"low":354.8913,"close":358.08,"volume":32177388},
-{"date":"2026-09-17","open":367.48,"high":373.991,"low":359.765,"close":368.418,"volume":15823157}
+{"date":"2026-09-17","open":367.48,"high":374.12,"low":363.22,"close":366.2,"volume":38924057},
+{"date":"2026-09-18","open":369,"high":370.9,"low":360.751,"close":364.27,"volume":51922257},
+{"date":"2026-09-21","open":371.635,"high":378.36,"low":371.07,"close":375.3,"volume":36599609}
   ]
 }

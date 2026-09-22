@@ -28,4 +28,4 @@ event_dates:
   - "2026-09-15"
   - "2026-09-16"
 
-split_date: "2026-08-01"  # IS: Jun 1-Jul 31 (61d), OOS: Aug 1-Sep 17 (48d)
+split_date: "2026-08-01"  # IS: Jun 1-Jul 31, OOS: Aug 1-Sep 21

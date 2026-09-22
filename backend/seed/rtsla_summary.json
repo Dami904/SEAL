@@ -153,18 +153,26 @@
     {
       "timestamp": "2026-09-17T02:00:00+00:00",
       "equity": 3161.594059213331
+    },
+    {
+      "timestamp": "2026-09-17T23:00:00+00:00",
+      "equity": 3218.715562321136
+    },
+    {
+      "timestamp": "2026-09-19T02:00:00+00:00",
+      "equity": 3293.1236789835957
     }
   ],
   "headline": {
-    "trade_count": 38,
-    "total_pnl": 3161.594059213331,
-    "sharpe": 7.510360318840905,
-    "sortino": 30.39246228202247,
+    "trade_count": 40,
+    "total_pnl": 3293.1236789835957,
+    "sharpe": 7.7239635363922705,
+    "sortino": 31.07599915705872,
     "max_drawdown": -46.61845262133738,
-    "turnover": 380000.0,
+    "turnover": 400000.0,
     "forecast": {
-      "count": 38,
-      "mae_pct": 0.013488717953726984,
+      "count": 40,
+      "mae_pct": 0.01349942975337443,
       "directional_count": 4,
       "directional_accuracy": 1.0
     }
@@ -186,20 +194,20 @@
       }
     },
     "out_of_sample": {
-      "trade_count": 16,
-      "total_pnl": 1246.9749800232769,
-      "sharpe": 6.724895442987072,
-      "sortino": 32.81423470511142,
+      "trade_count": 18,
+      "total_pnl": 1378.5045997935417,
+      "sharpe": 7.217138161748027,
+      "sortino": 34.663203900777056,
       "max_drawdown": -46.61845262133761,
-      "turnover": 160000.0,
+      "turnover": 180000.0,
       "forecast": {
-        "count": 16,
-        "mae_pct": 0.012634733543475878,
+        "count": 18,
+        "mae_pct": 0.012753424699386996,
         "directional_count": 2,
         "directional_accuracy": 1.0
       }
     },
-    "oos_decay_ratio": 0.7888037717835237,
+    "oos_decay_ratio": 0.8465419056301295,
     "oos_decay_flag": false
   },
   "rolling_30day_sharpe": [
@@ -593,18 +601,26 @@
     },
     {
       "date": "2026-09-17",
-      "sharpe": 6.83755988924329
+      "sharpe": 7.232252822042721
+    },
+    {
+      "date": "2026-09-18",
+      "sharpe": 7.232252822042721
+    },
+    {
+      "date": "2026-09-19",
+      "sharpe": 6.930196298502698
     }
   ],
   "one_shot_vs_clipped": {
     "clipped": {
-      "total_pnl": 3161.594059213331,
-      "sharpe": 7.510360318840905
+      "total_pnl": 3293.1236789835957,
+      "sharpe": 7.7239635363922705
     },
     "one_shot": {
-      "total_pnl": 3124.7466024771475,
-      "sharpe": 7.468813477472407
+      "total_pnl": 3254.336882419192,
+      "sharpe": 7.681813453794103
     },
-    "pnl_improvement": 36.84745673618363
+    "pnl_improvement": 38.78679656440363
   }
 }

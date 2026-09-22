@@ -121,18 +121,26 @@
     {
       "timestamp": "2026-09-10T23:00:00+00:00",
       "equity": 3036.345969296684
+    },
+    {
+      "timestamp": "2026-09-17T23:00:00+00:00",
+      "equity": 3101.694935185636
+    },
+    {
+      "timestamp": "2026-09-18T23:00:00+00:00",
+      "equity": 3225.500530292186
     }
   ],
   "headline": {
-    "trade_count": 30,
-    "total_pnl": 3036.3459692966844,
-    "sharpe": 8.672805820010703,
+    "trade_count": 32,
+    "total_pnl": 3225.500530292186,
+    "sharpe": 8.651059706750557,
     "sortino": 0.0,
     "max_drawdown": 0.0,
-    "turnover": 300000.0,
+    "turnover": 320000.0,
     "forecast": {
-      "count": 30,
-      "mae_pct": 0.00718024644130082,
+      "count": 32,
+      "mae_pct": 0.0068944017269925596,
       "directional_count": 1,
       "directional_accuracy": 1.0
     }
@@ -154,20 +162,20 @@
       }
     },
     "out_of_sample": {
-      "trade_count": 10,
-      "total_pnl": 1255.403045744061,
-      "sharpe": 9.6575536368441,
+      "trade_count": 12,
+      "total_pnl": 1444.5576067395627,
+      "sharpe": 9.362965116852987,
       "sortino": 0.0,
       "max_drawdown": 0.0,
-      "turnover": 100000.0,
+      "turnover": 120000.0,
       "forecast": {
-        "count": 10,
-        "mae_pct": 0.0046163946114386855,
+        "count": 12,
+        "mae_pct": 0.004281450678260347,
         "directional_count": 0,
         "directional_accuracy": null
       }
     },
-    "oos_decay_ratio": 1.0611626246447958,
+    "oos_decay_ratio": 1.0287935238539512,
     "oos_decay_flag": false
   },
   "rolling_30day_sharpe": [
@@ -530,17 +538,49 @@
     {
       "date": "2026-09-10",
       "sharpe": 9.394800334974097
+    },
+    {
+      "date": "2026-09-11",
+      "sharpe": 9.394800334974097
+    },
+    {
+      "date": "2026-09-12",
+      "sharpe": 9.394800334974097
+    },
+    {
+      "date": "2026-09-13",
+      "sharpe": 9.394800334974097
+    },
+    {
+      "date": "2026-09-14",
+      "sharpe": 9.394800334974097
+    },
+    {
+      "date": "2026-09-15",
+      "sharpe": 9.394800334974097
+    },
+    {
+      "date": "2026-09-16",
+      "sharpe": 9.394800334974097
+    },
+    {
+      "date": "2026-09-17",
+      "sharpe": 9.947404230004194
+    },
+    {
+      "date": "2026-09-18",
+      "sharpe": 10.743178739750563
     }
   ],
   "one_shot_vs_clipped": {
     "clipped": {
-      "total_pnl": 3036.3459692966844,
-      "sharpe": 8.672805820010703
+      "total_pnl": 3225.500530292186,
+      "sharpe": 8.651059706750557
     },
     "one_shot": {
-      "total_pnl": 3007.2558718733817,
-      "sharpe": 8.650377034210365
+      "total_pnl": 3194.471093040663,
+      "sharpe": 8.629187553368629
     },
-    "pnl_improvement": 29.090097423302723
+    "pnl_improvement": 31.029437251522722
   }
 }

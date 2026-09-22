@@ -192,7 +192,7 @@ exploration only (not used by CI/tests), and `scripts/build_real_dataset.py`
 rebuilds each symbol's series from its committed raw OHLCV JSON.
 
 Backtest must cover **at least 60 days** total and **at least 30 days out of
-sample** — the default config's window (Jun 1–Sep 17, 2026, split Aug 1)
+sample** — the default config's window (Jun 1–Sep 21, 2026, split Aug 1)
 clears both with margin. See `docs/PLAYBOOK_PUBLISH.md` for publishing the
 same strategy through Bitget Playbook's sandbox as a second, platform-
 sanctioned record.
