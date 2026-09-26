@@ -1,36 +1,37 @@
-"""Builds data/{symbol}_series.csv from real daily OHLCV
-(data/{symbol}_ohlcv_raw.json, fetched via bitget-mcp-server's
-equity_price_historical) plus a documented, explicitly-modeled after-hours
-rToken price.
+"""Builds data/{symbol}_series.csv entirely from real market data — nothing
+in the backtest input is modeled or simulated:
 
-What's real: cash_close[t] and next_cash_open[t] (the actual close and the
-actual next trading day's open) come straight from the fetched daily bars —
-this is the ground truth the strategy is scored against and what the
-pre-open fair-value forecast is graded on. event_dates come from
-bitget-mcp-server's equity_calendar_earnings endpoint (real, verified
-report dates) plus real FOMC/CPI dates (apply to every symbol, since they're
-macro-wide, not stock-specific).
+- rtoken_price: the actual traded Bitget rToken price (e.g. RTSLAUSDT), the
+  close of each real 15-minute spot candle, from
+  data/{symbol}_rtoken_15m_raw.json (fetched by fetch_rtoken_candles.py from
+  Bitget's public market-data API).
+- cash_close / next_cash_open: the real official close of the underlying
+  stock on trading day t and the real open on trading day t+1, from
+  data/{ticker}_ohlcv_raw.json (bitget-mcp-server equity_price_historical).
+- event_dates: real earnings report dates (bitget-mcp-server
+  equity_calendar_earnings) plus real FOMC/CPI dates.
 
-What's modeled (NOT real tick data, no Bitget rToken feed exists to us yet
-— see docs/LIMITATIONS.md): the after-hours rtoken_price PATH between
-close[t] and open[t+1]. On a real event date, the print leaks a meaningful
-fraction of the true move early and converges toward it by the close of the
-window — real information gets priced in efficiently. On a non-event
-night, an early spurious overreaction (noise, front-loaded) decays as the
-window progresses, converging toward the small real close-to-open move by
-the final observation — the "fade" trade wins when the early spike
-genuinely doesn't persist, which the real (unmanipulated) next_cash_open
-determines, not a coincidence of two independent draws.
+One row per real rToken bar observed while US cash is shut: strictly after
+the 16:00 ET close of day t, up to and including the 09:30 ET open of the
+next trading day (weekends and holidays included — the rToken keeps
+trading). A bar's price is only known at its CLOSE time (bar open + 15min),
+so that is the row timestamp — no row can see a price from its own future.
+
+next_cash_open is carried on each row only so the pre-open forecast can be
+GRADED after the fact; the signal never reads it (see seal/backtest.py).
 """
 
 import argparse
 import csv
 import json
-import random
+import statistics
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parent.parent
+NY = ZoneInfo("America/New_York")
+BAR = timedelta(minutes=15)
 
 # FOMC + August CPI — macro-wide, apply to every symbol.
 MACRO_EVENT_DATES = {"2026-07-28", "2026-07-29", "2026-09-11", "2026-09-15", "2026-09-16"}
@@ -45,80 +46,89 @@ SYMBOLS = {
     "rmsft": {"raw": "msft_ohlcv_raw.json", "earnings": {"2026-07-29"}},
 }
 
-ROWS_PER_NIGHT = 3
-EVENT_REVEAL_START = 0.30
-EVENT_REVEAL_END = 0.90
-EVENT_NOISE_STD = 0.004
-NON_EVENT_NOISE_STD = 0.020
-NON_EVENT_RESIDUAL_STD = 0.003
+FIELDS = [
+    "timestamp", "date", "rtoken_price", "cash_close",
+    "minutes_to_cash_open", "next_cash_open", "rtoken_volume",
+]
 
 
 def event_dates_for(symbol: str) -> set[str]:
     return MACRO_EVENT_DATES | SYMBOLS[symbol]["earnings"]
 
 
-def build(symbol: str, seed: int = 7) -> list[dict]:
-    rng = random.Random(seed)
-    raw_path = ROOT / "data" / SYMBOLS[symbol]["raw"]
-    raw = json.loads(raw_path.read_text())["rows"]
-    event_dates = event_dates_for(symbol)
+def _ny(date: str, hh: int, mm: int) -> datetime:
+    d = datetime.strptime(date, "%Y-%m-%d")
+    return d.replace(hour=hh, minute=mm, tzinfo=NY).astimezone(timezone.utc)
 
-    out = []
-    for i in range(len(raw) - 1):
-        day, next_day = raw[i], raw[i + 1]
-        date = day["date"]
-        cash_close = day["close"]
-        next_open = next_day["open"]
-        true_move = next_open / cash_close - 1.0
-        is_event = date in event_dates
 
-        base_dt = datetime.strptime(date, "%Y-%m-%d").replace(
-            hour=20, minute=0, tzinfo=timezone.utc
-        )
-        for j in range(ROWS_PER_NIGHT):
-            progress = (j + 1) / ROWS_PER_NIGHT
-            if is_event:
-                reveal = EVENT_REVEAL_START + (EVENT_REVEAL_END - EVENT_REVEAL_START) * progress
-                implied_move = true_move * reveal + rng.gauss(0, EVENT_NOISE_STD)
-            else:
-                reveal = progress
-                overreaction_std = NON_EVENT_NOISE_STD * (1 - progress) + NON_EVENT_RESIDUAL_STD
-                implied_move = true_move * reveal + rng.gauss(0, overreaction_std)
+def load_rtoken_bars(symbol: str) -> list[tuple[datetime, float, float]]:
+    """(observation time = bar close, close price, base volume), sorted."""
+    raw = json.loads((ROOT / "data" / f"{symbol}_rtoken_15m_raw.json").read_text())["rows"]
+    bars = [
+        (datetime.fromtimestamp(r["ts"] / 1000, tz=timezone.utc) + BAR, r["close"], r["base_volume"])
+        for r in raw
+    ]
+    return sorted(bars)
 
-            rtoken_price = cash_close * (1 + implied_move)
-            ts = base_dt + timedelta(hours=j * 3)
-            minutes_to_open = max(0, round((1 - progress) * 12 * 60))
 
+def build(symbol: str) -> tuple[list[dict], dict]:
+    daily = json.loads((ROOT / "data" / SYMBOLS[symbol]["raw"]).read_text())["rows"]
+    bars = load_rtoken_bars(symbol)
+
+    out: list[dict] = []
+    nights_missing_open = 0
+    close_gaps = []
+    for day, next_day in zip(daily, daily[1:]):
+        close_t = _ny(day["date"], 16, 0)
+        open_t = _ny(next_day["date"], 9, 30)
+        night = [b for b in bars if close_t < b[0] <= open_t]
+        if not night:
+            continue
+        if night[-1][0] != open_t:
+            nights_missing_open += 1
+
+        # Alignment sanity check: the rToken print at the cash close should
+        # sit close to the official close if timestamps/timezones are right.
+        at_close = [b for b in bars if b[0] == close_t]
+        if at_close:
+            close_gaps.append(abs(at_close[0][1] / day["close"] - 1))
+
+        for obs_t, price, volume in night:
             out.append({
-                "timestamp": ts.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                "date": date,
-                "rtoken_price": round(rtoken_price, 4),
-                "cash_close": round(cash_close, 4),
-                "minutes_to_cash_open": minutes_to_open,
-                "next_cash_open": round(next_open, 4),
+                "timestamp": obs_t.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "date": day["date"],
+                "rtoken_price": price,
+                "cash_close": day["close"],
+                "minutes_to_cash_open": int((open_t - obs_t).total_seconds() // 60),
+                "next_cash_open": next_day["open"],
+                "rtoken_volume": volume,
             })
-    return out
+
+    stats = {
+        "rows": len(out),
+        "nights": len({r["date"] for r in out}),
+        "nights_missing_open_bar": nights_missing_open,
+        "zero_volume_rows": sum(1 for r in out if r["rtoken_volume"] == 0),
+        "median_close_gap_pct": 100 * statistics.median(close_gaps) if close_gaps else None,
+    }
+    return out, stats
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--symbol", default="rtsla", choices=sorted(SYMBOLS.keys()),
-                         help="which symbol to build (default: rtsla)")
+                        help="which symbol to build (default: rtsla)")
     parser.add_argument("--all", action="store_true", help="build every symbol")
     args = parser.parse_args()
 
-    symbols = list(SYMBOLS.keys()) if args.all else [args.symbol]
-    for symbol in symbols:
-        rows = build(symbol)
+    for symbol in list(SYMBOLS.keys()) if args.all else [args.symbol]:
+        rows, stats = build(symbol)
         out_path = ROOT / "data" / f"{symbol}_series.csv"
         with out_path.open("w", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=[
-                "timestamp", "date", "rtoken_price", "cash_close",
-                "minutes_to_cash_open", "next_cash_open",
-            ])
+            writer = csv.DictWriter(f, fieldnames=FIELDS)
             writer.writeheader()
             writer.writerows(rows)
-        print(f"wrote {len(rows)} rows to {out_path}")
+        print(f"{symbol}: {stats} -> {out_path.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":

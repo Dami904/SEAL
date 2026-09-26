@@ -2,10 +2,9 @@
 for exploring `run_backtest.py` without pulling real data first.
 
 Not used by pytest or CI (the test suite builds its own tiny in-memory
-DataFrames; CI rebuilds the real dataset from the committed
-data/tsla_ohlcv_raw.json via build_real_dataset.py). This is not real
-market data — point `configs/default.yaml`'s `data_path` at
-data/real_series.csv (the default) before publishing backtest results.
+DataFrames; CI rebuilds the real dataset from the committed raw files
+via build_real_dataset.py). This is not real market data — the configs
+point at data/{symbol}_series.csv (real Bitget rToken prices) by default.
 """
 
 import csv

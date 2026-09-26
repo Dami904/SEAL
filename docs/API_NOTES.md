@@ -32,14 +32,40 @@ execution, per CLAUDE.md — filled in before writing a client, not after.
   is US-stock/ETF cash-market data only (per the `equity` category). It
   does not give the tokenized rToken's own trading price.
 
-## Bitget rToken price feed — NOT measured, blocks live wiring
+## Bitget rToken price feed — public spot candles (measured)
 
-No read-only, documented endpoint for Bitget's own rToken price was found
-or tested this session. `rtoken_price` in `data/real_series.csv` is a
-documented model (see `docs/LIMITATIONS.md`), not real tick data. Per
-CLAUDE.md: do not write a live client against this feed until it has been
-found, tested, and its failure modes (timeout meaning, rate limits, staleness
-window) are mapped here first.
+rTokens are listed as ordinary Bitget spot pairs: `RTSLAUSDT`, `RNVDAUSDT`,
+`RAAPLUSDT`, `RAMZNUSDT`, `RMSFTUSDT` (all `status: online` in
+`GET https://api.bitget.com/api/v2/spot/public/symbols`). Their historical
+candles come from Bitget's **public, keyless** market-data API, and they are
+the source of every `rtoken_price` in the backtest.
+
+- **Endpoint**: `GET /api/v2/spot/market/history-candles?symbol=RTSLAUSDT&granularity=15min&endTime=<ms>&limit=200`.
+- **Row shape**: `[ts, open, high, low, close, baseVol, usdtVol, quoteVol]`,
+  all strings; `ts` is the bar **open** time in ms UTC. The close is only
+  known at `ts + 15min`, so that is when the backtest observes it.
+- **Pagination**: max 200 bars per call, newest first; page backward by
+  setting `endTime` to the oldest `ts` returned. `scripts/fetch_rtoken_candles.py`
+  dedupes by `ts` and stops if a page makes no progress.
+- **Granularity gotcha**: strings are `15min`, `30min`, `1h` (not `30m` —
+  that returns `400171`). `30min` returned `48001 Parameter validation
+  failed` for June 2026 `endTime`s, while `15min` and `1h` worked for the
+  whole window. 15min is used because it lands exactly on the 13:30 UTC
+  cash open; `1h` stops at 13:00 and never reaches "cash open".
+- **Latency / failures**: calls took several seconds each from this network,
+  and one symbol-list download timed out mid-body on a 30s limit. The
+  fetcher uses a 60s timeout and retries with exponential backoff (5
+  attempts); failures after that abort loudly rather than writing a
+  partial file silently.
+- **Liquidity note**: recent bars show very small base volumes on some
+  pairs (fractions of a share per bar). A traded price is real, but a
+  thin bar may not absorb the configured parent size — see
+  `docs/LIMITATIONS.md`.
+- **Offline reproducibility**: the fetched bars are committed as
+  `data/{symbol}_rtoken_15m_raw.json`; CI and fresh clones rebuild the
+  dataset from them with no network access.
+
+Live order placement is still out of scope — this is read-only market data.
 
 ## Bitget rToken structure (verified via Bitget's own docs + web research, not the hackathon handbook)
 

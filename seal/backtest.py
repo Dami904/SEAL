@@ -137,6 +137,11 @@ def run_backtest(df: pd.DataFrame, params: Params, seed: int = 0) -> BacktestRes
 
     for _, row in df.iterrows():
         if position is None:
+            # Cash is open (or opening): the after-hours window is over, so no
+            # new parent — entering here would carry into the next night
+            # against a stale anchor close.
+            if row["minutes_to_cash_open"] <= 0:
+                continue
             spread = compute_spread(row["rtoken_price"], row["cash_close"])
             event = is_event_window(row["date"], params.event_dates)
             side = parent_side(spread, params.entry_threshold, event)

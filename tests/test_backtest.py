@@ -53,6 +53,18 @@ def test_long_trade_opens_and_closes_at_cash_reopen():
     assert metrics["total_pnl"] == pytest.approx(trade.pnl_dollars)
 
 
+def test_no_entry_on_cash_open_bar():
+    # A trigger-worthy spread printed AT the open must not open a parent: the
+    # after-hours window is over and the next row belongs to the next night.
+    df = pd.DataFrame([
+        {"timestamp": ts(13), "date": "2026-01-05", "rtoken_price": 97.0,
+         "cash_close": 100.0, "minutes_to_cash_open": 0},
+        {"timestamp": ts(21), "date": "2026-01-06", "rtoken_price": 99.0,
+         "cash_close": 99.0, "minutes_to_cash_open": 600},
+    ])
+    assert run_backtest(df, make_params()).trades == []
+
+
 def test_costs_reduce_pnl_versus_raw_move():
     df = pd.DataFrame([
         {"timestamp": ts(18), "date": "2026-01-05", "rtoken_price": 97.0,

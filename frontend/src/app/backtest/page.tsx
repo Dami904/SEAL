@@ -58,10 +58,11 @@ export default async function BacktestPage({
       <SymbolSwitcher basePath="/backtest" active={symbol} />
 
       <p className="max-w-2xl text-xs leading-relaxed text-mist">
-        These numbers are a backtest against a documented after-hours price model
-        (real close/open, modeled intraday path) over a 75-trading-day window — see{" "}
-        <code className="text-snow">docs/LIMITATIONS.md</code>. Short sample; treat as illustrative
-        of the mechanism, not a validated real-world edge.
+        Backtested on real data only: actual Bitget rToken 15-minute prices while cash is shut,
+        anchored to real official closes, over 77 nights (Jun–Sep 2026). Parameters were not
+        retuned on this window, and out-of-sample results are mixed — see{" "}
+        <code className="text-snow">docs/LIMITATIONS.md</code>. Short sample; not a validated
+        real-world edge.
       </p>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">

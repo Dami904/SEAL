@@ -90,7 +90,7 @@ Bitget is the market and the backtest host.
 | Piece | Use |
 |---|---|
 | Bitget rToken | Only tradable instrument |
-| Bitget price / last / mid | `spread` vs cash close |
+| Bitget rToken spot candles (public API) | real after-hours prices → `spread` vs cash close |
 | Bitget orders | Child clips (paper or live) |
 | Bitget Playbook | Official Alpha Factory backtest path — parent rules, PnL, max DD, Sharpe |
 | Bitget account | Optional paper/live execution of the same clips |
@@ -136,12 +136,14 @@ seal/
 │   ├── default.yaml         # rTSLA (also the backend's default)
 │   ├── rnvda.yaml, raapl.yaml, ramzn.yaml, rmsft.yaml
 ├── data/
-│   ├── {tsla,nvda,aapl,amzn,msft}_ohlcv_raw.json  # real OHLCV via
+│   ├── r{tsla,nvda,aapl,amzn,msft}_rtoken_15m_raw.json  # REAL Bitget rToken
+│   │                        #   15m candles, public API (committed)
+│   ├── {tsla,nvda,aapl,amzn,msft}_ohlcv_raw.json  # real cash OHLCV via
 │   │                        #   bitget-mcp-server (committed)
-│   ├── r{tsla,nvda,aapl,amzn,msft}_series.csv      # derived: real close/open
-│   │                        #   + after-hours model (gitignored — rebuilt by
-│   │                        #   build_real_dataset.py, incl. in CI, from the
-│   │                        #   committed raw JSON)
+│   ├── r{tsla,nvda,aapl,amzn,msft}_series.csv      # derived: real rToken
+│   │                        #   prices while cash is shut, anchored to the
+│   │                        #   real close (gitignored — rebuilt offline by
+│   │                        #   build_real_dataset.py, incl. in CI)
 │   └── sample_series.csv    # synthetic, standalone convenience generator for
 │                             #   local exploration — NOT used by pytest or CI
 ├── reports/                 # generated, gitignored — see Quick start
@@ -149,7 +151,8 @@ seal/
 ├── scripts/
 │   ├── run_backtest.py
 │   ├── generate_sample_data.py
-│   └── build_real_dataset.py  # --symbol <slug> or --all
+│   ├── fetch_rtoken_candles.py  # pulls real rToken candles (network, run once)
+│   └── build_real_dataset.py  # --symbol <slug> or --all (offline)
 ├── backend/                 # TS/Fastify — serves the backtest report +
 │   │                        #   a live forecast endpoint (the reframe)
 │   ├── src/{signal.ts, forecast.ts, routes/, server.ts}
@@ -176,6 +179,8 @@ cd seal
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
+# optional, needs network — raw candles are already committed:
+# python scripts/fetch_rtoken_candles.py
 python scripts/build_real_dataset.py --all    # or --symbol rtsla for just one
 python scripts/run_backtest.py --config configs/default.yaml
 # also: configs/rnvda.yaml, raapl.yaml, ramzn.yaml, rmsft.yaml
@@ -184,12 +189,30 @@ python scripts/run_backtest.py --config configs/default.yaml
 Five symbols are backtested **independently** — `rTSLA`, `rNVDA`, `rAAPL`,
 `rAMZN`, `rMSFT` — to show the signal generalizes beyond one stock, not a
 correlated portfolio (see `docs/LIMITATIONS.md`). Each config points at its
-own real closes/opens (via `bitget-mcp-server`) plus a documented
-after-hours price model — read `docs/LIMITATIONS.md` before treating any
-headline Sharpe as a validated real-world edge; none of them are one yet.
+own **real Bitget rToken 15-minute prices** (public market API) while cash
+is shut, anchored to the real official close (`bitget-mcp-server`). Nothing
+in the backtest input is modeled — read `docs/LIMITATIONS.md` before
+treating any headline Sharpe as a validated real-world edge; none of them
+are one yet.
 `scripts/generate_sample_data.py` regenerates a synthetic fallback for local
 exploration only (not used by CI/tests), and `scripts/build_real_dataset.py`
-rebuilds each symbol's series from its committed raw OHLCV JSON.
+rebuilds each symbol's series from the committed raw rToken + OHLCV JSON.
+
+### Results on real rToken prices (config unchanged, not retuned)
+
+| Symbol | Trades | Sharpe | Sortino | Max DD ($) | IS Sharpe | OOS Sharpe | Clip gain ($) |
+|---|---|---|---|---|---|---|---|
+| rTSLA | 45 | 3.89 | 7.36 | -207 | 5.94 | -0.80 ⚠ | 43.6 |
+| rNVDA | 53 | 3.31 | 10.86 | -110 | 4.07 | 2.57 | 51.4 |
+| rAAPL | 9 | 3.70 | n/a (no losing day) | 0 | 4.54 | n/a (1 trade) | 8.7 |
+| rAMZN | 20 | 1.48 | 1.56 | -165 | 2.70 | -3.26 ⚠ | 19.4 |
+| rMSFT | 18 | 1.29 | 3.78 | -87 | 1.34 | n/a (1 trade) | 17.5 |
+
+Window Jun 1–Sep 21, 2026 (77 nights/symbol), IS/OOS split Aug 1.
+⚠ = OOS Sharpe < 0.5× IS (the handbook's decay reference). Positive in
+sample on all five; out of sample only rNVDA holds up — the fade edge on
+rTSLA shrank sharply after the rToken launch month. We report that rather
+than retune on the full window. Details: `docs/LIMITATIONS.md`.
 
 Backtest must cover **at least 60 days** total and **at least 30 days out of
 sample** — the default config's window (Jun 1–Sep 21, 2026, split Aug 1)

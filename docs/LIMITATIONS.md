@@ -2,40 +2,61 @@
 
 Said plainly, not glossed over.
 
-## The backtest's edge is not validated, and the headline Sharpe should not be read as a real-world expectation
+## Real data in, honest (and mixed) results out
 
-The Sharpe/Sortino numbers in `reports/backtest_summary.md` come from a
-77-trading-day window against a synthetic after-hours rToken price path
-(see below). Two independent reasons the absolute numbers are optimistic:
+Every input the backtest sees is real market data:
 
-- **Short sample.** 77 trading days is a very short backtest. Sharpe
-  estimates from short windows are statistically noisy and routinely
-  overstate the true long-run Sharpe — this is true of any strategy, not
-  specific to SEAL.
-- **Modeled rToken path.** The after-hours rToken price between the real
-  close and the real next-day open (see below) is a documented model
-  calibrated to plausible but arbitrary parameters, not fit to any real
-  historical Bitget rToken tick data (none was accessible to us — see
-  `API_NOTES.md`). The model was deliberately built to avoid a regression-
-  to-the-mean artifact (an earlier version let "fade" trades win mostly by
-  statistical coincidence, not real economics — fixed, see git history of
-  `scripts/build_real_dataset.py`), but it has not been validated against
-  real rToken market microstructure, and no attempt was made to tune it to
-  produce a "nicer" Sharpe — that would be less honest, not more.
+- **rToken price**: actual traded Bitget rToken prices — the close of each
+  real 15-minute spot candle for `RTSLAUSDT`, `RNVDAUSDT`, `RAAPLUSDT`,
+  `RAMZNUSDT`, `RMSFTUSDT` from Bitget's public market-data API
+  (`scripts/fetch_rtoken_candles.py`, see `API_NOTES.md`). A bar is only
+  observed at its close time, so no row can see a future price.
+- **Cash close / next open**: real daily OHLCV of the underlying stocks
+  (`bitget-mcp-server`). The close anchors the spread; the next open is
+  carried only to grade the forecast after the fact — the signal never
+  reads it.
+- **Event dates**: real earnings dates (`bitget-mcp-server`
+  `equity_calendar_earnings`) plus real FOMC/CPI dates.
 
-**What is real**: the underlying `cash_close` and `next_cash_open` values
-are real daily OHLCV (fetched via `bitget-mcp-server`) for every symbol,
-and each symbol's `event_dates` (its own real earnings date, from
-`bitget-mcp-server`'s `equity_calendar_earnings`, plus real FOMC/CPI dates
-that apply macro-wide) are real, verified calendar dates, not fabricated.
-The trading P&L and forecast-accuracy metrics are graded against those real
-outcomes. What's modeled is only the intermediate after-hours path the
-strategy would have observed — see `scripts/build_real_dataset.py`.
+Alignment check: the rToken print at 16:00 ET sits a median 0.01–0.02%
+from the official cash close on every symbol, and every one of the 77
+nights per symbol has a bar exactly at the 09:30 ET open.
 
-**Before treating these numbers as a submission claim of edge**: re-run
-against a longer real dataset and, ideally, real Bitget rToken historical
-prices once accessible (see `API_NOTES.md` for what's missing), or validate
-via Bitget Playbook's own backtest.
+**Earlier versions of this repo used a modeled after-hours path derived
+from the realized next open.** That leaked the outcome into the input and
+produced Sharpe 7–9 with near-zero drawdown. It was replaced with real
+rToken candles; the numbers below are what the unchanged strategy
+(same config, no retuning) does on real prices.
+
+| Symbol | Trades | Sharpe | IS Sharpe (trades) | OOS Sharpe (trades) | OOS decay flag |
+|---|---|---|---|---|---|
+| rTSLA | 45 | 3.89 | 5.94 (33) | -0.80 (12) | yes |
+| rNVDA | 53 | 3.31 | 4.07 (41) | 2.57 (12) | no (0.63x) |
+| rAAPL | 9 | 3.70 | 4.54 (8) | n/a (1) | too few trades |
+| rAMZN | 20 | 1.48 | 2.70 (14) | -3.26 (6) | yes |
+| rMSFT | 18 | 1.29 | 1.34 (17) | n/a (1) | too few trades |
+
+Read plainly:
+
+- **The edge decays out of sample.** Only rNVDA holds up past the
+  2026-08-01 split. Summed across all five symbols, the 32 OOS trades are
+  roughly flat.
+- **Where it decays**: on rTSLA the "fade" branch won 27 of 30 trades in
+  June–July but 2 of 10 in August–September, stopped out fast. rTokens
+  launched in June 2026; a plausible (untested) explanation is that the
+  young, thin book overreacted early and those overreactions shrank as
+  liquidity arrived. That is a hypothesis, not a result.
+- **Parameters were not tuned on this data.** Retuning the threshold/stop
+  on the full window would make the OOS look better by construction —
+  that is the overfitting the IS/OOS split exists to catch.
+- **Short sample.** 77 nights per symbol; single-trade OOS Sharpes (rAAPL,
+  rMSFT) are meaningless and shown as such. A Sortino of 0.00 with 0.00
+  max drawdown (rAAPL) means *no losing days* in 9 trades, not a bad
+  Sortino.
+- **Fills are at the bar close price.** Real fills in a thin rToken book
+  would be worse; see the cost-model and liquidity sections below.
+- **USDT vs USD.** rTokens quote in USDT and the cash close is in USD; the
+  USDT/USD basis (typically a few bps) is ignored.
 
 ## Five symbols, independently — not a portfolio
 
@@ -61,8 +82,7 @@ The pre-open fair-value forecast (`forecast_price` on each `Trade`, scored
 in `BacktestResult.forecast_accuracy()`) is a single point estimate derived
 from the same spread/event logic as the trade signal. It is not a
 calibrated probability distribution over possible opens, and its accuracy
-(`mae_pct`, `directional_accuracy`) inherits the same short-sample and
-modeled-path caveats as the trading backtest above.
+(`mae_pct`, `directional_accuracy`) inherits the same short-sample caveats as the trading backtest above.
 
 ## Cost model is a simplification
 
@@ -71,3 +91,11 @@ modeled-path caveats as the trading backtest above.
 time-diversified execution, not a fitted market-impact model for Bitget's
 actual rToken order book depth (no historical order-book data was
 available to calibrate against).
+
+## Thin rToken books
+
+Real 15-minute bars show that some rToken pairs trade very little per bar
+at times (a handful of bars have zero volume). A real traded price does
+not mean the configured parent size ($5,000 tier) could have filled at it
+— which is exactly the problem the Seal clip layer is meant to address,
+but its cost model has not been calibrated against real order-book depth.

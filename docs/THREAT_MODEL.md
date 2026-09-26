@@ -22,7 +22,7 @@ execution client exists (see `docs/API_NOTES.md`).
   does not attempt.
 - **No exchange trading API key.** All price data comes from
   `bitget-mcp-server` (read-only, no key). No order is ever placed —
-  `seal/backtest.py` simulates fills against historical/modeled data only.
+  `seal/backtest.py` simulates fills against historical market data only.
 - **No mainnet exposure.** Per CLAUDE.md, nothing in this repo deploys to
   or transacts on mainnet. The only sanctioned path for future live
   execution is Bitget Agent Hub's `--paper-trading` Demo environment (its
