@@ -48,8 +48,10 @@ Read plainly:
   the 2026-08-01 split, and even it falls just under the 0.5x reference.
   Summed across all five symbols, the 32 OOS trades lose about $100 on
   $5,000 tiers — roughly flat after costs.
-- **Where it decays**: on rTSLA the "fade" branch won 27 of 30 trades in
-  June–July but 2 of 10 in August–September, stopped out fast. rTokens
+- **Where it decays**: on rTSLA the "fade" branch won 24 of 30 trades in
+  June–July but 2 of 10 in August–September, stopped out fast. Across
+  all five symbols, typical nightly spikes were 25–40% smaller out of
+  sample. rTokens
   launched in June 2026; a plausible (untested) explanation is that the
   young, thin book overreacted early and those overreactions shrank as
   liquidity arrived. That is a hypothesis, not a result.

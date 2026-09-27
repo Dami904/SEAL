@@ -25,7 +25,7 @@ It is two layers on one book:
 1. **Signal** — a rules-based after-hours signal: rToken vs last official cash close.  
 2. **Seal** — the parent order is never sent as one print. It is clipped and jittered on Bitget.
 
-AI (Qwen / Cursor) may write code and search parameters. It does **not** decide fills. The saved config is what you backtest and what judges replay.
+AI (Claude, via Claude Code) wrote and audited the code. It does **not** decide trades, and the strategy parameters were fixed, not searched. The saved config is what you backtest and what judges replay.
 
 If the instrument is not a Bitget rToken, it is not this project.
 
@@ -67,17 +67,17 @@ If `|spread|` clears the entry threshold and the session is after-hours or weeke
 
 Exit at next cash open, when the spread mean-reverts, or at a hard stop.
 
-One name. No add-ons in the same window. Hard notional cap, expressed as a **tier**, not a public dollar ticket.
+One position at a time. No add-ons in the same window. Hard notional cap per trade, expressed as a **tier** ($5,000 in the published backtests).
 
 ### Execution (Seal)
 
 1. Parent size comes from the signal and the tier cap.  
-2. Parent is split into clips (for example 10–20% each).  
+2. Parent is split into clips (8 clips of 8–20% each in the published configs).  
 3. Clips go to Bitget with short random delays.  
 4. Clipping stops if the spread is gone, the stop is hit, or cash is about to open.  
 5. PnL and Sharpe are scored on the **parent**, not on each child.
 
-**Hidden in live/paper logs:** residual size, clip count, jitter salt.  
+**Private in live execution (planned):** residual size, clip count, jitter salt.  
 **Public for judges:** rules, costs, parent equity curve, backtest metrics.
 
 That is confidentiality here: **the after-hours book does not see full size.**
@@ -86,15 +86,15 @@ That is confidentiality here: **the after-hours book does not see full size.**
 
 ## How Bitget is integrated
 
-Bitget is the market and the backtest host.
+Bitget is the market and the data source.
 
-| Piece | Use |
-|---|---|
-| Bitget rToken | Only tradable instrument |
-| Bitget rToken spot candles (public API) | real after-hours prices → `spread` vs cash close |
-| Bitget orders | Child clips (paper or live) |
-| Bitget Playbook | Official Alpha Factory backtest path — parent rules, PnL, max DD, Sharpe |
-| Bitget account | Optional paper/live execution of the same clips |
+| Piece | Use | Status |
+|---|---|---|
+| Bitget rToken spot pairs (`RTSLAUSDT`, `RNVDAUSDT`, `RAAPLUSDT`, `RAMZNUSDT`, `RMSFTUSDT`) | The only instruments traded | Used |
+| Bitget public market API (`history-candles`, `public/symbols`) | Real 15-minute rToken prices while cash is shut; published fee (0.10%) and price/size precision | Used |
+| `bitget-mcp-server` | Real official closes/opens and earnings dates of the underlying stocks | Used |
+| Bitget orders (Agent Hub paper trading) | Sending the child clips live | Not built yet |
+| Bitget Playbook (GetAgent) | Platform-hosted copy of the backtest | Package drafted, not published (see `docs/PLAYBOOK_PUBLISH.md`) |
 
 ```
 US cash close (anchor)
@@ -105,17 +105,17 @@ Signal rules → parent side + tier
         ↓
 Seal splitter → N clips + jitter
         ↓
-Bitget Playbook fill model  and/or  Bitget orders
+Backtest fill model (bar close + Bitget fee + clip-dependent slippage)
         ↓
-parent report (Sharpe, Sortino, DD, turnover)
+parent report (Sharpe, Sortino, DD, turnover, IS/OOS, rolling Sharpe)
 ```
 
-Run two Playbook (or local) backtests on the **same signal**:
+The backtest runs the **same signal** twice:
 
 - one-shot parent  
-- clipped parent with extra spread / impact  
+- clipped parent  
 
-Seal is doing its job if clipped results stay inside your impact budget.
+Seal is doing its job if the clipped run costs less than the one-shot run (it does on all five symbols; see the results table).
 
 ---
 
@@ -153,7 +153,7 @@ seal/
 │   ├── fetch_rtoken_candles.py  # pulls real rToken candles (network, run once)
 │   └── build_real_dataset.py  # --symbol <slug> or --all (offline)
 ├── backend/                 # TS/Fastify — serves the backtest report +
-│   │                        #   a live forecast endpoint (the reframe)
+│   │                        #   a live pre-open fair-value forecast endpoint
 │   ├── src/{signal.ts, forecast.ts, routes/, server.ts}
 │   └── test/
 ├── frontend/                 # TS/Next.js — /backtest, /forecast
@@ -218,11 +218,9 @@ Details: `docs/LIMITATIONS.md`.
 
 Backtest must cover **at least 60 days** total and **at least 30 days out of
 sample** — the default config's window (Jun 1–Sep 21, 2026, split Aug 1)
-clears both with margin. See `docs/PLAYBOOK_PUBLISH.md` for publishing the
-same strategy through Bitget Playbook's sandbox as a second, platform-
-sanctioned record.
+clears both with margin.
 
-**Backend + frontend (serves the report, demos the reframe):**
+**Backend + frontend (serves the reports, demos the pre-open forecast):**
 
 ```bash
 pnpm install
@@ -230,8 +228,9 @@ pnpm --filter @seal/backend dev     # http://localhost:8787
 pnpm --filter @seal/frontend dev    # http://localhost:3000
 ```
 
-Requires `reports/backtest_summary.json` to exist first (produced by the
-Python step above). Gate for CI/local: `pnpm lint && pnpm typecheck &&
+The backend serves `reports/{symbol}_summary.json` from the Python step
+above when present, and otherwise falls back to the committed snapshots in
+`backend/seed/`. Gate for CI/local: `pnpm lint && pnpm typecheck &&
 pnpm test && pnpm build` from the repo root.
 
 ---
@@ -260,28 +259,32 @@ Not “all traders.” Not a research chatbot.
 
 ## Role of the LLM
 
-- Built with **Claude Sonnet 5, via Claude Code** (the Qwen hackathon
-  subsidy explicitly excludes Claude Code, so this isn't a Qwen build).
-- Used to scaffold `signal.py` / `execution.py` / `backtest.py`, pull real
-  price history + earnings dates for all five symbols via `bitget-mcp-server`,
-  and design the metrics extensions (IS/OOS split, rolling Sharpe, cost-gap,
-  forecast accuracy).
+- Built with **Claude Sonnet 5 and Claude Opus 5.5, via Claude Code** (no
+  Qwen credits used).
+- Used to write the Python engine, data pipeline, backend, frontend, tests
+  and CI; pull real stock prices and earnings dates via `bitget-mcp-server`
+  and real rToken candles and fees via Bitget's public API; and design the
+  metrics (IS/OOS split, rolling Sharpe, cost-gap, forecast accuracy).
+- Used to audit the work: it found and removed a lookahead leak in an early
+  modeled dataset and corrected the fee to Bitget's published rToken spot
+  rate.
 - Not used inside `backtest.py` to pick a trade's side or size at runtime —
   that's deterministic code (`seal/signal.py`, `seal/execution.py`), not a
   model call.
 
 ---
 
-## Submission checklist (Alpha Factory)
+## Submission checklist (Alpha Factory) — submitted
 
-- [ ] Form track: **Alpha Factory** · sub-theme: **After-Hours Information Pricing**  
-- [ ] Project Description: this alpha, this user, these metrics  
-- [ ] Public GitHub with this README  
-- [ ] Runnable `scripts/run_backtest.py`  
-- [ ] Backtest ≥ 60 days, OOS ≥ 30 days  
-- [ ] LLM role field filled  
-- [ ] X post with `#BitgetHackathon` and `@Bitget_AI` (not a bare retweet)  
-- [ ] Links in **Submission Materials Link**, one per line, labeled  
+- [x] Form track: **Alpha Factory** · sub-theme: **After-Hours Information Pricing**  
+- [x] Project Description: this alpha, this user, these metrics  
+- [x] Public GitHub with this README  
+- [x] Runnable `scripts/run_backtest.py`  
+- [x] Backtest ≥ 60 days, OOS ≥ 30 days  
+- [x] LLM role field filled  
+- [x] X post with `#BitgetHackathon` and `@Bitget_AI`  
+- [x] Links in **Submission Materials Link**, one per line, labeled  
+- [x] Demo video  
 
 Form: https://forms.gle/GyWZCMCPocgJdJon6  
 Landing: https://www.bitget.com/activity-hub/hackathon
@@ -292,4 +295,4 @@ Landing: https://www.bitget.com/activity-hub/hackathon
 
 MIT
 
-Backtest and paper trading only unless you send clips on Bitget with your own account and risk. Not financial advice.
+Backtest only: nothing in this repo places orders. Not financial advice.

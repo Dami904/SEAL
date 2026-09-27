@@ -1,25 +1,28 @@
 # API notes
 
-Measured behavior of every external API this repo depends on for
-execution, per CLAUDE.md — filled in before writing a client, not after.
+Measured behavior of every external API this repo depends on, recorded
+before writing a client against it, not after.
 
 ## `bitget-mcp-server` (measured)
 
 - **Install**: `claude mcp add bitget-mcp-server --transport http https://agent.bitget.com/mcp`
   — HTTP transport, no API key in the documented install.
-- **Connectivity gotcha (hit this session)**: `agent.bitget.com` failed to
-  resolve via a local ISP/router DNS resolver (query refused), while public
-  resolvers (8.8.8.8, 1.1.1.1) resolved it fine to a live Cloudflare-fronted
-  host. Not a Bitget outage — if this server won't connect, check DNS
-  before assuming the service is down.
+- **Connectivity gotcha**: on some networks the local ISP/router DNS
+  resolver fails for `agent.bitget.com` (and intermittently for
+  `api.bitget.com` and `github.com`), while public resolvers (1.1.1.1,
+  8.8.8.8) resolve them fine. Switching the machine's DNS to a public
+  resolver, or `curl --doh-url https://cloudflare-dns.com/dns-query`,
+  fixes it. Some networks additionally block connections to
+  `agent.bitget.com` itself even when DNS resolves; that is a network
+  restriction, not a Bitget outage.
 - **Discovery**: `guide()` lists categories (`equity`, `crypto`, `etf`,
   `news`, `sentiment`); `guide(category="equity")` lists entries.
 - **Entries used**:
   - `equity_price_historical` — `do_query(entry_id="equity_price_historical",
     params={"symbol": "TSLA", "start_date": "2026-06-01", "end_date":
-    "2026-09-17"})`. Returned real daily OHLCV (open/high/low/close/volume/
+    "2026-09-21"})`. Returned real daily OHLCV (open/high/low/close/volume/
     vwap/transactions), provider `massive`, `data_tier: free`, synchronous
-    (~0.5s), no pagination needed for a 75-row range. Confirmed working for
+    (~0.5s), no pagination needed for a ~78-row range. Confirmed working for
     TSLA, NVDA, AAPL, AMZN, MSFT — not a narrow whitelist, standard
     US-listed tickers broadly. Used to build `data/{symbol}_ohlcv_raw.json`
     → `data/{symbol}_series.csv` (see `scripts/build_real_dataset.py`).
@@ -28,9 +31,9 @@ execution, per CLAUDE.md — filled in before writing a client, not after.
     real, verified earnings report dates directly (provider `finnhub`) —
     used instead of manual web search once discovered. This is what sourced
     each symbol's real event date in `configs/{symbol}.yaml`.
-- **What it does NOT cover**: Bitget's own rToken price feed. This server
-  is US-stock/ETF cash-market data only (per the `equity` category). It
-  does not give the tokenized rToken's own trading price.
+- **What it does NOT cover**: Bitget's own rToken prices or fees. This
+  server is US-stock/ETF cash-market data only (per the `equity`
+  category). rToken prices and fees come from the public market API below.
 
 ## Bitget rToken price feed — public spot candles (measured)
 
@@ -52,7 +55,12 @@ the source of every `rtoken_price` in the backtest.
   failed` for June 2026 `endTime`s, while `15min` and `1h` worked for the
   whole window. 15min is used because it lands exactly on the 13:30 UTC
   cash open; `1h` stops at 13:00 and never reaches "cash open".
-- **Latency / failures**: calls took several seconds each from this network,
+- **Fees and precision**: `public/symbols` publishes `takerFeeRate` /
+  `makerFeeRate` `0.001` (0.10%) for all five rToken spot pairs, price
+  precision 2 and quantity precision 4 (RTSLAUSDT). The backtest uses the
+  0.10% rate. (For comparison, the TSLAUSDT *futures* contract's taker
+  rate is 0.06% — not applicable to rToken spot.)
+- **Latency / failures**: calls took several seconds each from our network,
   and one symbol-list download timed out mid-body on a 30s limit. The
   fetcher uses a 60s timeout and retries with exponential backoff (5
   attempts); failures after that abort loudly rather than writing a
@@ -78,10 +86,15 @@ Live order placement is still out of scope — this is read-only market data.
 
 ## Bitget Playbook / GetAgent Skill
 
-- Install: `npx @bitget-ai/getagent-skill@latest install --client agent`.
-- Requires a Playbook account login + a separate Playbook API key (not an
-  exchange API key), bound in GetAgent Studio — a manual, account-bound
-  step. See `docs/PLAYBOOK_PUBLISH.md` for the exact flow.
+- Install: `npx @bitget-ai/getagent-skill@latest install --client claude`
+  (valid clients: `claude`, `cursor`, `codex`, `all`; `--client agent` is
+  rejected).
+- Upload/run go to `https://api.bitget.com/api/v1/playbook/...` with an
+  `ACCESS-KEY` header. That header must be a **Playbook key** from the
+  Playbook platform: an exchange API key is rejected with
+  `4100 No user found for the provided playbook_key`, even though the
+  skill's docs call it a "Bitget OpenAPI ACCESS-KEY". See
+  `docs/PLAYBOOK_PUBLISH.md`.
 - Its own displayed backtest output: return, max drawdown, win rate, trade
   count, Sharpe. **Missing**: Sortino, turnover, IS/OOS split — the
   handbook's judging criteria score all of those, so Playbook's output
@@ -92,7 +105,5 @@ Live order placement is still out of scope — this is read-only market data.
 
 Bitget Agent Hub's `--paper-trading` flag routes order execution to a
 separate Demo environment with its own Demo API key — no real funds, not
-mainnet. This is the only path CLAUDE.md's mainnet-safety rule would permit
-for live paper trading, if ever added. Any such script must be named with
-a `live:` or `deploy:` prefix per CLAUDE.md and is out of scope for this
-submission.
+mainnet. This is the only path this project would use for live paper
+trading, if added. It is out of scope for this submission.
