@@ -38,7 +38,7 @@ CLAUDE.md: no live API keys handled by an agent).
 > notional at $5,000. Split the parent order into 8 clips (8–20% of
 > notional each) with 5–45 second random delays between them; stop sending
 > further clips if the spread reverts, the stop is hit, or cash is about to
-> reopen. Assume a 6bps taker fee (paid on entry and exit) plus slippage
+> reopen. Assume a 10bps taker fee (Bitget's published rToken spot rate) (paid on entry and exit) plus slippage
 > that decays with more clips (impact reduction from splitting size across
 > time).
 

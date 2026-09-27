@@ -30,17 +30,24 @@ rToken candles; the numbers below are what the unchanged strategy
 
 | Symbol | Trades | Sharpe | IS Sharpe (trades) | OOS Sharpe (trades) | OOS decay flag |
 |---|---|---|---|---|---|
-| rTSLA | 45 | 3.89 | 5.94 (33) | -0.80 (12) | yes |
-| rNVDA | 53 | 3.31 | 4.07 (41) | 2.57 (12) | no (0.63x) |
-| rAAPL | 9 | 3.70 | 4.54 (8) | n/a (1) | too few trades |
-| rAMZN | 20 | 1.48 | 2.70 (14) | -3.26 (6) | yes |
-| rMSFT | 18 | 1.29 | 1.34 (17) | n/a (1) | too few trades |
+| rTSLA | 45 | 3.55 | 5.63 (33) | -1.46 (12) | yes |
+| rNVDA | 53 | 2.96 | 3.73 (41) | 1.78 (12) | yes, barely (0.48x) |
+| rAAPL | 9 | 3.69 | 4.53 (8) | n/a (1) | too few trades |
+| rAMZN | 20 | 1.16 | 2.42 (14) | -3.67 (6) | yes |
+| rMSFT | 18 | 1.01 | 1.08 (17) | n/a (1) | too few trades |
+
+Costs: Bitget's published rToken spot fee, 0.10% per side (`takerFeeRate`
+in the public symbols API, identical for all five pairs), plus
+clip-dependent slippage. An earlier run used 6 bps per side — Bitget's
+TSLAUSDT *futures* taker rate, not the rToken spot rate — which understated
+costs; at 6 bps rNVDA's OOS ratio was 0.63x.
 
 Read plainly:
 
-- **The edge decays out of sample.** Only rNVDA holds up past the
-  2026-08-01 split. Summed across all five symbols, the 32 OOS trades are
-  roughly flat.
+- **The edge decays out of sample.** Only rNVDA stays profitable past
+  the 2026-08-01 split, and even it falls just under the 0.5x reference.
+  Summed across all five symbols, the 32 OOS trades lose about $100 on
+  $5,000 tiers — roughly flat after costs.
 - **Where it decays**: on rTSLA the "fade" branch won 27 of 30 trades in
   June–July but 2 of 10 in August–September, stopped out fast. rTokens
   launched in June 2026; a plausible (untested) explanation is that the

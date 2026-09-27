@@ -198,21 +198,24 @@ are one yet.
 exploration only (not used by CI/tests), and `scripts/build_real_dataset.py`
 rebuilds each symbol's series from the committed raw rToken + OHLCV JSON.
 
-### Results on real rToken prices (config unchanged, not retuned)
+### Results on real rToken prices (strategy parameters unchanged, not retuned)
 
 | Symbol | Trades | Sharpe | Sortino | Max DD ($) | IS Sharpe | OOS Sharpe | Clip gain ($) |
 |---|---|---|---|---|---|---|---|
-| rTSLA | 45 | 3.89 | 7.36 | -207 | 5.94 | -0.80 ⚠ | 43.6 |
-| rNVDA | 53 | 3.31 | 10.86 | -110 | 4.07 | 2.57 | 51.4 |
-| rAAPL | 9 | 3.70 | n/a (no losing day) | 0 | 4.54 | n/a (1 trade) | 8.7 |
-| rAMZN | 20 | 1.48 | 1.56 | -165 | 2.70 | -3.26 ⚠ | 19.4 |
-| rMSFT | 18 | 1.29 | 3.78 | -87 | 1.34 | n/a (1 trade) | 17.5 |
+| rTSLA | 45 | 3.55 | 6.61 | -239 | 5.63 | -1.46 ⚠ | 43.6 |
+| rNVDA | 53 | 2.96 | 9.27 | -126 | 3.73 | 1.78 ⚠ (0.48×) | 51.4 |
+| rAAPL | 9 | 3.69 | n/a (no losing day) | 0 | 4.53 | n/a (1 trade) | 8.7 |
+| rAMZN | 20 | 1.16 | 1.20 | -193 | 2.42 | -3.67 ⚠ | 19.4 |
+| rMSFT | 18 | 1.01 | 2.90 | -109 | 1.08 | n/a (1 trade) | 17.5 |
 
-Window Jun 1–Sep 21, 2026 (77 nights/symbol), IS/OOS split Aug 1.
+Window Jun 1–Sep 21, 2026 (77 nights/symbol), IS/OOS split Aug 1. Costs
+use Bitget's published rToken spot fee (0.10% per side, from the public
+symbols API) plus clip-dependent slippage.
 ⚠ = OOS Sharpe < 0.5× IS (the handbook's decay reference). Positive in
-sample on all five; out of sample only rNVDA holds up — the fade edge on
-rTSLA shrank sharply after the rToken launch month. We report that rather
-than retune on the full window. Details: `docs/LIMITATIONS.md`.
+sample on all five; out of sample only rNVDA stays profitable (and sits
+just under the 0.5× line) — the fade edge shrank sharply after the rToken
+launch month. We report that rather than retune on the full window.
+Details: `docs/LIMITATIONS.md`.
 
 Backtest must cover **at least 60 days** total and **at least 30 days out of
 sample** — the default config's window (Jun 1–Sep 21, 2026, split Aug 1)
