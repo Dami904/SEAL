@@ -14,6 +14,10 @@ Deadline: **27 September 2026, submission window closes (UTC+8)**
 **Live**: [seal-alpha-factory.vercel.app](https://seal-alpha-factory.vercel.app) (dashboard) · [seal-backend-vxtk.onrender.com](https://seal-backend-vxtk.onrender.com) (API)  
 **Demo video**: [Watch the demo](https://youtu.be/b1XXQ2hNn6c)
 
+
+https://github.com/user-attachments/assets/42a3a542-f17a-4914-b8ad-6975c4f82ef7
+
+
 ---
 
 ## What SEAL is
