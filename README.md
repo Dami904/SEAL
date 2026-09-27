@@ -11,7 +11,8 @@ Sub-theme: **After-Hours Information Pricing**
 Handbook: https://bitget-ai.gitbook.io/bitgetai_hackathons2  
 Deadline: **27 September 2026, submission window closes (UTC+8)**
 
-**Live**: [seal-alpha-factory.vercel.app](https://seal-alpha-factory.vercel.app) (dashboard) · [seal-backend-vxtk.onrender.com](https://seal-backend-vxtk.onrender.com) (API)
+**Live**: [seal-alpha-factory.vercel.app](https://seal-alpha-factory.vercel.app) (dashboard) · [seal-backend-vxtk.onrender.com](https://seal-backend-vxtk.onrender.com) (API)  
+**Demo video**: [Watch the demo](https://youtu.be/b1XXQ2hNn6c)
 
 ---
 
@@ -79,7 +80,7 @@ One name. No add-ons in the same window. Hard notional cap, expressed as a **tie
 **Hidden in live/paper logs:** residual size, clip count, jitter salt.  
 **Public for judges:** rules, costs, parent equity curve, backtest metrics.
 
-That is confidentiality here: **the after-hours book does not see full size.** It is not Attestcoin and not a confidential vault.
+That is confidentiality here: **the after-hours book does not see full size.**
 
 ---
 
@@ -115,8 +116,6 @@ Run two Playbook (or local) backtests on the **same signal**:
 - clipped parent with extra spread / impact  
 
 Seal is doing its job if clipped results stay inside your impact budget.
-
-No Creditcoin. No Attestcoin. No CC3 mocks.
 
 ---
 
@@ -286,17 +285,6 @@ Not “all traders.” Not a research chatbot.
 
 Form: https://forms.gle/GyWZCMCPocgJdJon6  
 Landing: https://www.bitget.com/activity-hub/hackathon
-
----
-
-## What this is not
-
-- Not a confidential RWA loan  
-- Not Attestcoin / Creditcoin  
-- Not Agentic Trading (the LLM is not the decision-maker)  
-- Not an AI research desk  
-
-Those were a different hackathon. SEAL is only: **Bitget rToken, cash closed, sealed clips, replayable parent backtest.**
 
 ---
 
